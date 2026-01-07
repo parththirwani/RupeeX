@@ -22,6 +22,14 @@ export const updateProfile = async (req: Request, res: Response) => {
 
     const { firstName, middleName, lastName } = parsedData.data
 
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId }
+    })
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
     const updatedUser = await prisma.user.update({
       where: {
         id: req.user.userId

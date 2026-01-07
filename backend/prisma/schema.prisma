@@ -14,5 +14,7 @@ model User{
   firstName   String
   middleName  String?
   lastName    String
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
 }
 
