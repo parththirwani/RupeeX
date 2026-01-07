@@ -40,7 +40,15 @@ export const signup = async (req: Request, res: Response) => {
         password: hashedPassword,
         firstName,
         middleName,
-        lastName
+        lastName,
+        bank: {
+          create: {
+            balance: Math.floor(Math.random() * 10000) + 1
+          }
+        }
+      },
+      include: {
+        bank: true
       }
     })
 
@@ -51,7 +59,8 @@ export const signup = async (req: Request, res: Response) => {
         phone: user.phone,
         firstName: user.firstName,
         middleName: user.middleName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        balance: user.bank?.balance
       }
     })
   } catch {

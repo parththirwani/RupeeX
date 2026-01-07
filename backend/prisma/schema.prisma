@@ -16,5 +16,12 @@ model User{
   lastName    String
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
+  bank        BankAccount?
 }
 
+model BankAccount{
+  id          String            @id     @default(uuid())
+  balance     Int
+  userId      String            @unique
+  user        User              @relation(fields: [userId], references: [id])      
+}
