@@ -2,7 +2,7 @@ import type { Request, Response } from "express"
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs"
 import prisma from "../../lib/db"
-import { signinSchema, userSchema } from "../../schema/authSchema"
+import { signinSchema, updatePasswordSchema, userSchema } from "../../schema/authSchema"
 
 const JWT_SECRET = process.env.JWT_SECRET || "SUPER_SECRET_KEY"
 
@@ -124,3 +124,61 @@ export const logout = async (req: Request, res: Response) => {
   }
 }
 
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const parsedData = updatePasswordSchema.safeParse(req.body)
+
+    if (!parsedData.success) {
+      return res.status(400).json({
+        message: "Validation failed",
+        errors: parsedData.error.issues.map(err => ({
+          field: err.path.join("."),
+          message: err.message
+        }))
+      })
+    }
+
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    const { oldPassword, newPassword } = parsedData.data
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId }
+    })
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password)
+
+    if (!isOldPasswordValid) {
+      return res.status(400).json({ message: "Old password is incorrect" })
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: req.user.userId
+      },
+      data: {
+        password: hashedPassword
+      }
+    })
+    return res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser.id,
+        phone: updatedUser.phone,
+        firstName: updatedUser.firstName,
+        middleName: updatedUser.middleName,
+        lastName: updatedUser.lastName
+      }
+    })
+  } catch {
+    return res.status(500).json({ message: "Internal server error" })
+  }
+}
