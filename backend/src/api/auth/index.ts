@@ -80,17 +80,13 @@ export const signin = async (req: Request, res: Response) => {
     })
 
     if (!foundUser) {
-      return res.status(404).json({
-        message: "User does not exist"
-      })
+      return res.status(404).json({ message: "User does not exist" })
     }
 
     const isPasswordValid = await bcrypt.compare(password, foundUser.password)
 
     if (!isPasswordValid) {
-      return res.status(400).json({
-        message: "Wrong credentials"
-      })
+      return res.status(400).json({ message: "Wrong credentials" })
     }
 
     const token = jwt.sign(
@@ -99,11 +95,32 @@ export const signin = async (req: Request, res: Response) => {
       { expiresIn: "7d" }
     )
 
+    res.cookie("auth_token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+
     return res.status(200).json({
-      message: "User successfully signed in",
-      token
+      message: "User successfully signed in"
     })
   } catch {
     return res.status(500).json({ message: "Internal server error" })
   }
 }
+
+export const logout = async (req: Request, res: Response) => {
+  try {
+    res.clearCookie("auth_token", {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production"
+    })
+
+    return res.status(200).json({ message: "Logged out successfully" })
+  } catch {
+    return res.status(500).json({ message: "Internal server error" })
+  }
+}
+
