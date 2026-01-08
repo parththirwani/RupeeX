@@ -2,6 +2,39 @@ import type { Request, Response } from "express"
 import prisma from "../../lib/db"
 import { updateUserSchema } from "../../schema/authSchema"
 
+export const getProfile = async (req: Request, res: Response) => {
+try{
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" })
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      include: {
+        bank: true
+      }
+    })
+
+      if (!user) {
+      return res.status(404).json({ message: "User not found" })
+    }
+
+    return res.status(200).json({
+      message: "Profile fetched",
+      user: {
+        id: user.id,
+        phone: user.phone,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
+        balance: user.bank?.balance
+      }
+    })
+}catch {
+    return res.status(500).json({ message: "Internal server error" })
+  }
+}
+
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const parsedData = updateUserSchema.safeParse(req.body)

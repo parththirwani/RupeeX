@@ -112,7 +112,8 @@ export const signin = async (req: Request, res: Response) => {
     })
 
     return res.status(200).json({
-      message: "User successfully signed in"
+      message: "User successfully signed in", 
+      token: token
     })
   } catch {
     return res.status(500).json({ message: "Internal server error" })
